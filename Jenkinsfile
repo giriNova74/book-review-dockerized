@@ -2,47 +2,57 @@ pipeline {
   agent any
 
   environment {
-    DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
+    DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds') // Define DockerHub credentials
   }
 
   stages {
-    stage('Clone Repo') {
+
+    stage('Checkout Code') {
       steps {
-        git url: 'https://github.com/giriNova74/book-review-dockerized.git', credentialsId: 'github-creds'
+        git branch: 'main',
+            url: 'https://github.com/giriNova74/book-review-dockerized.git',
+            credentialsId: 'github-creds'
       }
     }
 
-    stage('Build Backend') {
+    stage('Build Backend Image') {
       steps {
         dir('backend') {
-          sh 'docker build -t giriprasad74/backend:latest .'
+          script {
+            sh 'docker build -t giriprasad74/backend:latest .'
+          }
         }
       }
     }
 
-    stage('Build Frontend') {
+    stage('Build Frontend Image') {
       steps {
         dir('frontend') {
-          sh 'docker build -t giriprasad74/frontend:latest .'
+          script {
+            sh 'docker build -t giriprasad74/frontend:latest .'
+          }
         }
       }
     }
 
-    stage('Push to DockerHub') {
+    stage('Push Images to DockerHub') {
       steps {
-        sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
-        sh 'docker push giriprasad74/backend:latest'
-        sh 'docker push giriprasad74/frontend:latest'
+        script {
+          sh "echo ${DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin"
+          sh 'docker push giriprasad74/backend:latest'
+          sh 'docker push giriprasad74/frontend:latest'
+        }
       }
     }
+
   }
 
   post {
+    success {
+      echo '✅ Build and push completed successfully.'
+    }
     failure {
       echo '❌ Build failed.'
-    }
-    success {
-      echo '✅ Build and push successful.'
     }
   }
 }
