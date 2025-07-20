@@ -1,58 +1,32 @@
 pipeline {
   agent any
-
   environment {
-    DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds') // Define DockerHub credentials
+    DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
   }
-
   stages {
-
-    stage('Checkout Code') {
+    stage('Checkout') {
       steps {
-        git branch: 'main',
-            url: 'https://github.com/giriNova74/book-review-dockerized.git',
-            credentialsId: 'github-creds'
+        git url: 'https://github.com/giriNova74/book-review-dockerized.git', branch: 'main', credentialsId: 'github-creds'
       }
     }
-
-    stage('Build Backend Image') {
+    stage('Use Minikube Docker') {
+      steps {
+        sh 'eval $(minikube docker-env)'
+      }
+    }
+    stage('Build Backend') {
       steps {
         dir('backend') {
-          script {
-            sh 'docker build -t giriprasad74/backend:latest .'
-          }
+          sh 'eval $(minikube docker-env) && docker build -t bookreview-backend:latest .'
         }
       }
     }
-
-    stage('Build Frontend Image') {
+    stage('Build Frontend') {
       steps {
         dir('frontend') {
-          script {
-            sh 'docker build -t giriprasad74/frontend:latest .'
-          }
+          sh 'eval $(minikube docker-env) && docker build -t bookreview-frontend:latest .'
         }
       }
-    }
-
-    stage('Push Images to DockerHub') {
-      steps {
-        script {
-          sh "echo ${DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin"
-          sh 'docker push giriprasad74/backend:latest'
-          sh 'docker push giriprasad74/frontend:latest'
-        }
-      }
-    }
-
-  }
-
-  post {
-    success {
-      echo '✅ Build and push completed successfully.'
-    }
-    failure {
-      echo '❌ Build failed.'
     }
   }
 }
