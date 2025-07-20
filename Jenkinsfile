@@ -54,4 +54,20 @@ pipeline {
           sh """
             echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
             docker push $DOCKER_HUB_REPO_BACKEND
-            docker push $DOC
+            docker push $DOCKER_HUB_REPO_FRONTEND
+            docker logout
+          """
+        }
+      }
+    }
+  }
+
+  post {
+    success {
+      echo '✅ Build completed successfully.'
+    }
+    failure {
+      echo '❌ Build failed.'
+    }
+  }
+}
